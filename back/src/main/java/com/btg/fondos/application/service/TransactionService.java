@@ -2,6 +2,7 @@ package com.btg.fondos.application.service;
 
 import com.btg.fondos.domain.enums.TransactionStatus;
 import com.btg.fondos.domain.enums.TransactionType;
+import com.btg.fondos.domain.events.SubscriptionCreatedEvent;
 import com.btg.fondos.domain.model.ActiveSubscription;
 import com.btg.fondos.domain.model.Client;
 import com.btg.fondos.domain.model.Fund;
@@ -9,6 +10,7 @@ import com.btg.fondos.domain.model.Transaction;
 import com.btg.fondos.infrastructure.repository.ClientRepository;
 import com.btg.fondos.infrastructure.repository.FundRepository;
 import com.btg.fondos.infrastructure.repository.TransactionRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,13 +25,16 @@ public class TransactionService {
     private final ClientRepository clientRepository;
     private final FundRepository fundRepository;
     private final TransactionRepository transactionRepository;
+    private final ApplicationEventPublisher publisher;
 
     public TransactionService(ClientRepository clientRepository,
                               FundRepository fundRepository,
-                              TransactionRepository transactionRepository) {
+                              TransactionRepository transactionRepository,
+                              ApplicationEventPublisher publisher) {
         this.clientRepository = clientRepository;
         this.fundRepository = fundRepository;
         this.transactionRepository = transactionRepository;
+        this.publisher = publisher;
     }
 
     @Transactional
@@ -45,6 +50,13 @@ public class TransactionService {
         Client client = clientOpt.get();
         Fund fund = fundOpt.get();
 
+        boolean alreadySubscribed = client.getActiveFunds().stream()
+                .anyMatch(s -> s.getFundId().equals(fundId));
+        if (alreadySubscribed) {
+            return saveTransaction(clientId, fundId, amount, TransactionType.SUBSCRIPTION,
+                    TransactionStatus.FAILED, "Already subscribed to this fund");
+        }
+
         if (amount.compareTo(fund.getMinimumAmount()) < 0) {
             return saveTransaction(clientId, fundId, amount, TransactionType.SUBSCRIPTION,
                     TransactionStatus.FAILED, "Amount below fund minimum");
@@ -59,8 +71,11 @@ public class TransactionService {
         client.getActiveFunds().add(new ActiveSubscription(fundId, amount, Instant.now()));
         clientRepository.save(client);
 
-        return saveTransaction(clientId, fundId, amount, TransactionType.SUBSCRIPTION,
+        Transaction tx = saveTransaction(clientId, fundId, amount, TransactionType.SUBSCRIPTION,
                 TransactionStatus.SUCCESS, "Subscription successful");
+
+        publisher.publishEvent(new SubscriptionCreatedEvent(this, clientId, fundId, tx.getTransactionId())); // <-- nuevo
+        return tx;
     }
 
     @Transactional
