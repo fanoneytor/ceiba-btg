@@ -3,7 +3,9 @@ package com.btg.fondos.domain.model;
 import com.btg.fondos.domain.enums.FundCategory;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -14,6 +16,8 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Document(collection = "funds")
 public class Fund {
 
