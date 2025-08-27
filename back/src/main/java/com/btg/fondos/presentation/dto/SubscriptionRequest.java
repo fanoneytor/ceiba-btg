@@ -1,4 +1,4 @@
-package com.btg.fondos.dto;
+package com.btg.fondos.presentation.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;

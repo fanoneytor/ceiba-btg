@@ -1,4 +1,4 @@
-package com.btg.fondos.repository;
+package com.btg.fondos.infrastructure.repository;
 
 import com.btg.fondos.domain.model.Transaction;
 import org.springframework.data.mongodb.repository.MongoRepository;

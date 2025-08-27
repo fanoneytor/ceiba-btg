@@ -1,4 +1,4 @@
-package com.btg.fondos.dto;
+package com.btg.fondos.presentation.dto;
 
 import java.math.BigDecimal;
 import java.time.Instant;

@@ -1,4 +1,4 @@
-package com.btg.fondos.dto;
+package com.btg.fondos.presentation.dto;
 
 import com.btg.fondos.domain.enums.TransactionStatus;
 import com.btg.fondos.domain.enums.TransactionType;

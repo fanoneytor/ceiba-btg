@@ -1,7 +1,7 @@
-package com.btg.fondos.service;
+package com.btg.fondos.application.service;
 
 import com.btg.fondos.domain.model.Client;
-import com.btg.fondos.repository.ClientRepository;
+import com.btg.fondos.infrastructure.repository.ClientRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;

@@ -1,4 +1,4 @@
-package com.btg.fondos.service;
+package com.btg.fondos.application.service;
 
 import com.btg.fondos.domain.enums.TransactionStatus;
 import com.btg.fondos.domain.enums.TransactionType;
@@ -6,9 +6,9 @@ import com.btg.fondos.domain.model.ActiveSubscription;
 import com.btg.fondos.domain.model.Client;
 import com.btg.fondos.domain.model.Fund;
 import com.btg.fondos.domain.model.Transaction;
-import com.btg.fondos.repository.ClientRepository;
-import com.btg.fondos.repository.FundRepository;
-import com.btg.fondos.repository.TransactionRepository;
+import com.btg.fondos.infrastructure.repository.ClientRepository;
+import com.btg.fondos.infrastructure.repository.FundRepository;
+import com.btg.fondos.infrastructure.repository.TransactionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

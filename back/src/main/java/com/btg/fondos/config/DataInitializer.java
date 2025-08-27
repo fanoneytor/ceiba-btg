@@ -2,7 +2,7 @@ package com.btg.fondos.config;
 
 import com.btg.fondos.domain.enums.FundCategory;
 import com.btg.fondos.domain.model.Fund;
-import com.btg.fondos.repository.FundRepository;
+import com.btg.fondos.infrastructure.repository.FundRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
