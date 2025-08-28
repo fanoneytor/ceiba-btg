@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Fullstack CFN - Angular in S3+CloudFront, Spring Boot en EC2, Mongo Atlas externo
+Description: Fullstack CFN - Angular en S3+CloudFront, Spring Boot en EC2, Mongo Atlas externo
 
 Parameters:
   ProjectName:
@@ -123,10 +123,8 @@ Resources:
           - Id: ec2-backend-origin
             DomainName: !GetAtt BackendEC2.PublicDnsName
             CustomOriginConfig:
-              OriginProtocolPolicy: http-only
+              OriginProtocolPolicy: http-only # solo HTTP
               HTTPPort: 80
-              HTTPSPort: 443
-              OriginSSLProtocols: [TLSv1.2]
         DefaultCacheBehavior:
           TargetOriginId: s3-angular-origin
           ViewerProtocolPolicy: redirect-to-https
@@ -156,7 +154,7 @@ Resources:
             ResponsePagePath: /index.html
 
   # ------------------------------------------------------------
-  # IAM Role & Instance Profile para EC2 (acceso a BackendBucket)
+  # IAM Role & Instance Profile para EC2
   # ------------------------------------------------------------
   EC2Role:
     Type: AWS::IAM::Role
@@ -208,52 +206,10 @@ Resources:
           CidrIp: 0.0.0.0/0
 
   # ------------------------------------------------------------
-  # EC2 backend con Nginx proxy + systemd service
+  # EC2 backend con Nginx + Spring Boot
   # ------------------------------------------------------------
   BackendEC2:
     Type: AWS::EC2::Instance
-    Metadata:
-      AWS::CloudFormation::Init:
-        config:
-          files:
-            /etc/systemd/system/springboot.service:
-              content: !Sub |
-                [Unit]
-                Description=Spring Boot Service
-                After=network.target
-
-                [Service]
-                Type=simple
-                Environment=SPRING_PROFILES_ACTIVE=prod
-                Environment=MONGO_URI=${MongoUri}
-                Environment=SERVER_PORT=${BackendPort}
-                ExecStart=/usr/bin/java -jar /opt/app/app.jar --server.port=${BackendPort} --spring.data.mongodb.uri=${MongoUri}
-                Restart=always
-                RestartSec=5
-                User=ec2-user
-                WorkingDirectory=/opt/app
-
-                [Install]
-                WantedBy=multi-user.target
-            /opt/app/README.txt:
-              content: !Sub |
-                Version: ${ArtifactVersion}
-          commands:
-            01_mkdir:
-              command: mkdir -p /opt/app
-            02_fetch_jar:
-              command: !Sub |
-                aws s3 cp s3://${BackendBucket}/${BackendJarS3Key} /opt/app/app.jar
-            03_permissions:
-              command: |
-                chown ec2-user:ec2-user /opt/app/app.jar
-                chmod 755 /opt/app/app.jar
-            04_systemd_reload:
-              command: systemctl daemon-reload
-            05_enable_start:
-              command: |
-                systemctl enable springboot
-                systemctl restart springboot
     Properties:
       ImageId: !FindInMap [RegionMap, !Ref AWS::Region, AMI]
       InstanceType: !Ref InstanceType
@@ -268,13 +224,75 @@ Resources:
           dnf update -y
           dnf install -y java-17-amazon-corretto nginx awscli
 
-          # Nginx como proxy
+          # Crear carpeta de la app
+          mkdir -p /opt/app
+
+          # Descargar JAR desde S3
+          aws s3 cp s3://${BackendBucket}/${BackendJarS3Key} /opt/app/app.jar
+
+          # Crear servicio systemd
+          cat >/etc/systemd/system/springboot.service <<SERVICE
+          [Unit]
+          Description=Spring Boot Service
+          After=network.target
+
+          [Service]
+          Type=simple
+          Environment=SPRING_PROFILES_ACTIVE=prod
+          Environment=MONGO_URI=${MongoUri}
+          Environment=SERVER_PORT=${BackendPort}
+          ExecStart=/usr/bin/java -jar /opt/app/app.jar --server.port=${BackendPort} --spring.data.mongodb.uri=${MongoUri}
+          Restart=always
+          RestartSec=5
+          User=ec2-user
+          WorkingDirectory=/opt/app
+
+          [Install]
+          WantedBy=multi-user.target
+          SERVICE
+
+          # Configurar permisos
+          chown ec2-user:ec2-user /opt/app/app.jar
+          chmod 755 /opt/app/app.jar
+
+          # Recargar systemd y arrancar Spring Boot
+          systemctl daemon-reload
+          systemctl enable springboot
+          systemctl start springboot
+
+          #Reemplazar nginx.conf por uno limpio (sin conflictos)
+          cat >/etc/nginx/nginx.conf <<'NGINXCONF'
+          user nginx;
+          worker_processes auto;
+          error_log /var/log/nginx/error.log warn;
+          pid /var/run/nginx.pid;
+
+          events { worker_connections 1024; }
+
+          http {
+              include       /etc/nginx/mime.types;
+              default_type  application/octet-stream;
+
+              log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+                                '$status $body_bytes_sent "$http_referer" '
+                                '"$http_user_agent" "$http_x_forwarded_for"';
+
+              access_log  /var/log/nginx/access.log  main;
+
+              sendfile        on;
+              keepalive_timeout  65;
+
+              include /etc/nginx/conf.d/*.conf;
+          }
+          NGINXCONF
+
+          # Configuración del backend en conf.d
           cat >/etc/nginx/conf.d/backend.conf <<NGINX
           server {
-            listen 80 default_server;
+            listen 80;
             server_name _;
             location /api/ {
-              proxy_pass http://localhost:${BackendPort}/;
+              proxy_pass http://localhost:${BackendPort};
               proxy_set_header Host $host;
               proxy_set_header X-Real-IP $remote_addr;
               proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -287,18 +305,10 @@ Resources:
           }
           NGINX
 
+          # Habilitar y arrancar Nginx
+          systemctl daemon-reload
           systemctl enable nginx
           systemctl restart nginx
-
-          /opt/aws/bin/cfn-init -v \
-            --stack ${AWS::StackName} \
-            --resource BackendEC2 \
-            --region ${AWS::Region}
-
-          /opt/aws/bin/cfn-signal -e $? \
-            --stack ${AWS::StackName} \
-            --resource BackendEC2 \
-            --region ${AWS::Region}
 
 Outputs:
   CloudFrontURL:
