@@ -64,7 +64,7 @@ public class TransactionService {
 
         if (client.getAvailableBalance().compareTo(amount) < 0) {
             return saveTransaction(clientId, fundId, amount, TransactionType.SUBSCRIPTION,
-                    TransactionStatus.FAILED, "Saldo insuficiente");
+                    TransactionStatus.FAILED, "No tiene saldo disponible para vincularse al fondo " + fund.getName());
         }
 
         client.setAvailableBalance(client.getAvailableBalance().subtract(amount));
