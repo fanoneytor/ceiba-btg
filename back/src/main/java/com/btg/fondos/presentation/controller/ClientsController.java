@@ -1,7 +1,5 @@
 package com.btg.fondos.presentation.controller;
 
-import com.btg.fondos.domain.enums.NotificationChannel;
-import com.btg.fondos.domain.model.Client;
 import com.btg.fondos.domain.model.Fund;
 import com.btg.fondos.presentation.dto.ActiveSubscriptionResponse;
 import com.btg.fondos.presentation.dto.ClientCreateRequest;
@@ -13,10 +11,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/clients")
@@ -33,17 +28,7 @@ public class ClientsController {
 
     @PostMapping
     public ResponseEntity<ClientResponse> create(@Valid @RequestBody ClientCreateRequest req) {
-        var c = new Client();
-        c.setName(req.name());
-        c.setEmail(req.email());
-        c.setPhone(req.phone());
-        c.setAvailableBalance(Optional.ofNullable(req.initialBalance()).orElse(new BigDecimal("500000")));
-        c.setPreferredNotification(Optional.ofNullable(req.preferredNotification()).orElse(NotificationChannel.EMAIL));
-        c.setActiveFunds(new java.util.ArrayList<>());
-        c.setCreatedAt(Instant.now());
-        c.setUpdatedAt(Instant.now());
-
-        var saved = clientService.save(c);
+        var saved = clientService.createClient(req);
         return ResponseEntity.ok(toResponseWithActiveFunds(saved));
     }
 

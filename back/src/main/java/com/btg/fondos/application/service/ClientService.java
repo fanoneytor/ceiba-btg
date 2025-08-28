@@ -2,6 +2,8 @@ package com.btg.fondos.application.service;
 
 import com.btg.fondos.domain.model.Client;
 import com.btg.fondos.infrastructure.repository.ClientRepository;
+import com.btg.fondos.presentation.dto.ClientCreateRequest;
+import com.btg.fondos.presentation.mapper.DtoMapper; // Import DtoMapper
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,4 +30,8 @@ public class ClientService {
         return clientRepository.findAll();
     }
 
+    public Client createClient(ClientCreateRequest req) {
+        Client c = DtoMapper.toClient(req); // Use the mapper
+        return clientRepository.save(c);
+    }
 }
