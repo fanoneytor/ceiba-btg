@@ -8,7 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { ClientService } from './services/client.service';
 import { Client } from './models/client.model';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -35,7 +35,14 @@ export class AppComponent implements OnInit {
 
   ngOnInit() {
     this.selectedClientId = this.clientsApi.getSelectedClientId();
-    this.clients$ = this.clientsApi.list();
+    this.clients$ = this.clientsApi.list().pipe(
+      tap((list) => {
+        if (!this.selectedClientId && list.length > 0) {
+          this.selectedClientId = list[0].id;
+          this.clientsApi.setSelectedClientId(this.selectedClientId);
+        }
+      })
+    );
   }
 
   onSelectClient(id: string) {
