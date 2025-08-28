@@ -113,22 +113,44 @@ Resources:
     Properties:
       DistributionConfig:
         Enabled: true
-        DefaultRootObject: index.html
         HttpVersion: http2
-        DefaultCacheBehavior:
-          TargetOriginId: s3-angular-origin
-          ViewerProtocolPolicy: redirect-to-https
-          AllowedMethods: [GET, HEAD]
-          CachedMethods: [GET, HEAD]
-          Compress: true
-          ForwardedValues:
-            QueryString: false
+        DefaultRootObject: index.html
         Origins:
           - Id: s3-angular-origin
             DomainName: !GetAtt AngularBucket.RegionalDomainName
             S3OriginConfig:
               OriginAccessIdentity: !Sub "origin-access-identity/cloudfront/${CloudFrontOAI}"
+          - Id: ec2-backend-origin
+            DomainName: !GetAtt BackendEC2.PublicDnsName
+            CustomOriginConfig:
+              OriginProtocolPolicy: http-only
+              HTTPPort: 80
+              HTTPSPort: 443
+              OriginSSLProtocols: [TLSv1.2]
+        DefaultCacheBehavior:
+          TargetOriginId: s3-angular-origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [GET, HEAD]
+          CachedMethods: [GET, HEAD]
+          ForwardedValues:
+            QueryString: false
+          Compress: true
+        CacheBehaviors:
+          - PathPattern: "/api/*"
+            TargetOriginId: ec2-backend-origin
+            ViewerProtocolPolicy: redirect-to-https
+            AllowedMethods: [GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE]
+            CachedMethods: [GET, HEAD]
+            ForwardedValues:
+              QueryString: true
+              Headers:
+                - Authorization
+                - Content-Type
+            Compress: true
         CustomErrorResponses:
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /index.html
           - ErrorCode: 404
             ResponseCode: 200
             ResponsePagePath: /index.html
@@ -176,6 +198,10 @@ Resources:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
           CidrIp: 0.0.0.0/0
       SecurityGroupEgress:
         - IpProtocol: -1
