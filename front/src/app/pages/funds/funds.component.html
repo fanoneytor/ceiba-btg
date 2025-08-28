@@ -63,8 +63,18 @@
           color="primary"
           (click)="openSubscribe(f)"
           [disabled]="!client"
+          *ngIf="!isSubscribed(f)"
         >
           Suscribirse
+        </button>
+        <button
+          mat-flat-button
+          color="warn"
+          (click)="cancel(f.id)"
+          [disabled]="!client"
+          *ngIf="isSubscribed(f)"
+        >
+          Cancelar
         </button>
       </mat-card-actions>
     </mat-card>

@@ -15,6 +15,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { ConfirmationDialogComponent } from '../../shared/components/confirmation-dialog/confirmation-dialog.component';
 
 @Component({
   standalone: true,
@@ -29,6 +31,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
     MatSelectModule,
     MatSnackBarModule,
     MatProgressSpinnerModule,
+    MatDialogModule,
   ],
   templateUrl: './funds.component.html',
   styleUrls: ['./funds.component.scss'],
@@ -56,7 +59,8 @@ export class FundsComponent implements OnInit {
     private fundsApi: FundService,
     private clientsApi: ClientService,
     private txApi: TransactionService,
-    private snack: MatSnackBar
+    private snack: MatSnackBar,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit() {
@@ -107,22 +111,57 @@ export class FundsComponent implements OnInit {
   confirmSubscribe() {
     if (!this.client || !this.selectedFund || this.subForm.invalid) return;
     const amount = this.subForm.value.amount!;
-    this.txApi
-      .subscribe({
-        clientId: this.client.id,
-        fundId: this.selectedFund.id,
-        amount,
-      })
-      .subscribe((tx) => {
-        this.snack.open(tx.message || 'Subscription created', 'Close', {
-          duration: 3000,
-          panelClass: ['success-toast']
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+      data: { message: `¿Está seguro que desea suscribirse a ${this.selectedFund.name} con un monto de ${amount}?` },
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.txApi
+          .subscribe({
+            clientId: this.client!.id,
+            fundId: this.selectedFund!.id,
+            amount,
+          })
+          .subscribe((tx) => {
+            this.snack.open(tx.message || 'Suscripción creada', 'Cerrar', {
+              duration: 3000,
+              panelClass: ['success-toast']
+            });
+            // refresh client to update balance/active funds
+            this.clientsApi
+              .getById(this.client!.id)
+              .subscribe((c) => (this.client = c));
+            this.selectedFund = null;
+          });
+      }
+    });
+  }
+
+  isSubscribed(fund: Fund): boolean {
+    if (!this.client) {
+      return false;
+    }
+    return this.client.activeFunds.some(activeFund => activeFund.fundId === fund.id);
+  }
+
+  cancel(fundId: string) {
+    if (!this.client) return;
+
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+      data: { message: '¿Está seguro que desea cancelar la suscripción a este fondo?' },
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.txApi.cancel({ clientId: this.client!.id, fundId }).subscribe((tx) => {
+          this.snack.open(tx.message || 'Cancelado', 'Cerrar', { duration: 3000, panelClass: ['success-toast'] });
+          // refresh client to update balance/active funds
+          this.clientsApi
+            .getById(this.client!.id)
+            .subscribe((c) => (this.client = c));
         });
-        // refresh client to update balance/active funds
-        this.clientsApi
-          .getById(this.client!.id)
-          .subscribe((c) => (this.client = c));
-        this.selectedFund = null;
-      });
+      }
+    });
   }
 }
