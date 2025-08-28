@@ -28,13 +28,9 @@ export class ClientComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.reload();
-  }
-
-  reload() {
-    const id = this.clientsApi.getSelectedClientId();
-    if (!id) return;
-    this.clientsApi.getById(id).subscribe((c) => (this.client = c));
+    this.clientsApi.selectedClient$.subscribe(client => {
+      this.client = client;
+    });
   }
 
   cancel(fundId: string) {
@@ -48,7 +44,7 @@ export class ClientComponent implements OnInit {
       if (result) {
         this.txApi.cancel({ clientId: this.client!.id, fundId }).subscribe((tx) => {
           this.snack.open(tx.message || 'Cancelado', 'Cerrar', { duration: 3000, panelClass: ['success-toast'] });
-          this.reload();
+          this.clientsApi.refreshClients();
         });
       }
     });

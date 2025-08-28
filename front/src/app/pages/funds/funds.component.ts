@@ -65,7 +65,9 @@ export class FundsComponent implements OnInit {
 
   ngOnInit() {
     this.loadFunds();
-    this.tryLoadClient();
+    this.clientsApi.selectedClient$.subscribe(client => {
+      this.client = client;
+    });
   }
 
   private loadFunds() {
@@ -80,20 +82,9 @@ export class FundsComponent implements OnInit {
     });
   }
 
-  private tryLoadClient() {
-    const id = this.clientsApi.getSelectedClientId();
-    if (!id) return;
-    this.clientsApi.getById(id).subscribe({
-      next: (c) => (this.client = c),
-      error: () => this.clientsApi.clearSelectedClient(),
-    });
-  }
-
   createClient() {
     if (this.clientForm.invalid) return;
     this.clientsApi.create(this.clientForm.value as any).subscribe((c) => {
-      this.client = c;
-      this.clientsApi.setSelectedClientId(c.id);
       this.snack.open('Cliente creado', 'Cerrar', { duration: 3000, panelClass: ['success-toast'] });
     });
   }
@@ -128,10 +119,7 @@ export class FundsComponent implements OnInit {
               duration: 3000,
               panelClass: ['success-toast']
             });
-            // refresh client to update balance/active funds
-            this.clientsApi
-              .getById(this.client!.id)
-              .subscribe((c) => (this.client = c));
+            this.clientsApi.refreshClients();
             this.selectedFund = null;
           });
       }
@@ -156,10 +144,7 @@ export class FundsComponent implements OnInit {
       if (result) {
         this.txApi.cancel({ clientId: this.client!.id, fundId }).subscribe((tx) => {
           this.snack.open(tx.message || 'Cancelado', 'Cerrar', { duration: 3000, panelClass: ['success-toast'] });
-          // refresh client to update balance/active funds
-          this.clientsApi
-            .getById(this.client!.id)
-            .subscribe((c) => (this.client = c));
+          this.clientsApi.refreshClients();
         });
       }
     });

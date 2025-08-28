@@ -8,7 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { ClientService } from './services/client.service';
 import { Client } from './models/client.model';
-import { Observable, tap } from 'rxjs';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -28,27 +28,25 @@ import { Observable, tap } from 'rxjs';
   styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnInit {
-  clients$!: Observable<Client[]>;
+  clients$: Observable<Client[]>;
   selectedClientId: string | null = null;
 
-  constructor(private clientsApi: ClientService) {}
+  constructor(private clientApi: ClientService) {
+    this.clients$ = this.clientApi.clients$;
+  }
 
   ngOnInit() {
-    this.selectedClientId = this.clientsApi.getSelectedClientId();
-    this.clients$ = this.clientsApi.list().pipe(
-      tap((list) => {
-        if (!this.selectedClientId && list.length > 0) {
-          this.selectedClientId = list[0].id;
-          this.clientsApi.setSelectedClientId(this.selectedClientId);
-        }
-      })
-    );
+    this.clientApi.selectedClient$.subscribe(client => {
+      this.selectedClientId = client ? client.id : null;
+    });
   }
 
   onSelectClient(id: string) {
-    this.selectedClientId = id || null;
-    if (id) this.clientsApi.setSelectedClientId(id);
-    else this.clientsApi.clearSelectedClient();
+    if (id) {
+      this.clientApi.setSelectedClientId(id);
+    } else {
+      this.clientApi.clearSelectedClient();
+    }
   }
 
   trackById = (_: number, c: Client) => c.id;
