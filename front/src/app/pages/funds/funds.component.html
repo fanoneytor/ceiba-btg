@@ -7,30 +7,30 @@
 <ng-template #content>
   <section *ngIf="!client" class="create-client">
     <mat-card>
-      <mat-card-title>Create Client</mat-card-title>
+      <mat-card-title>Crear Cliente</mat-card-title>
       <mat-card-content>
         <form [formGroup]="clientForm" (ngSubmit)="createClient()">
           <div class="row">
             <mat-form-field appearance="outline"
-              ><mat-label>Name</mat-label
+              ><mat-label>Nombre</mat-label
               ><input matInput formControlName="name"
             /></mat-form-field>
             <mat-form-field appearance="outline"
-              ><mat-label>Email</mat-label
+              ><mat-label>Correo</mat-label
               ><input matInput formControlName="email"
             /></mat-form-field>
             <mat-form-field appearance="outline"
-              ><mat-label>Phone</mat-label
+              ><mat-label>Teléfono</mat-label
               ><input matInput formControlName="phone"
             /></mat-form-field>
           </div>
           <div class="row">
             <mat-form-field appearance="outline"
-              ><mat-label>Initial Balance (COP)</mat-label
+              ><mat-label>Saldo Inicial (COP)</mat-label
               ><input type="number" matInput formControlName="initialBalance"
             /></mat-form-field>
             <mat-form-field appearance="outline"
-              ><mat-label>Notification</mat-label>
+              ><mat-label>Notificación</mat-label>
               <mat-select formControlName="preferredNotification">
                 <mat-option value="EMAIL">EMAIL</mat-option>
                 <mat-option value="SMS">SMS</mat-option>
@@ -43,7 +43,7 @@
             type="submit"
             [disabled]="clientForm.invalid"
           >
-            Create
+            Crear
           </button>
         </form>
       </mat-card-content>
@@ -54,9 +54,9 @@
     <mat-card *ngFor="let f of funds">
       <mat-card-title>{{ f.name }}</mat-card-title>
       <mat-card-subtitle
-        >Minimum: {{ f.minimumAmount | currency : "COP" }}</mat-card-subtitle
+        >Mínimo: {{ f.minimumAmount | currency : "COP" }}</mat-card-subtitle
       >
-      <mat-card-content>Category: {{ f.category }}</mat-card-content>
+      <mat-card-content>Categoría: {{ f.category }}</mat-card-content>
       <mat-card-actions>
         <button
           mat-flat-button
@@ -64,7 +64,7 @@
           (click)="openSubscribe(f)"
           [disabled]="!client"
         >
-          Subscribe
+          Suscribirse
         </button>
       </mat-card-actions>
     </mat-card>
@@ -72,33 +72,33 @@
 
   <section *ngIf="client" class="client-info">
     <mat-card>
-      <mat-card-title>Client</mat-card-title>
+      <mat-card-title>Cliente</mat-card-title>
       <mat-card-content>
         <p>
-          <b>{{ client.name }}</b> — Balance:
+          <b>{{ client.name }}</b> — Saldo:
           {{ client.availableBalance | currency : "COP" }}
         </p>
-        <p>Notification: {{ client.preferredNotification }}</p>
+        <p>Notificación: {{ client.preferredNotification }}</p>
       </mat-card-content>
     </mat-card>
   </section>
 
   <!-- Dialog simple inline -->
   <mat-card *ngIf="selectedFund" class="subscribe">
-    <mat-card-title>Subscribe: {{ selectedFund.name }}</mat-card-title>
+    <mat-card-title>Suscripción: {{ selectedFund.name }}</mat-card-title>
     <mat-card-content>
       <form [formGroup]="subForm" (ngSubmit)="confirmSubscribe()">
         <mat-form-field appearance="outline" class="w-300">
           <mat-label
-            >Amount (>=
+            >Monto (>=
             {{ selectedFund.minimumAmount | currency : "COP" }})</mat-label
           >
           <input type="number" matInput formControlName="amount" />
           <mat-error *ngIf="subForm.get('amount')?.hasError('min')"
-            >Amount must be ≥ minimum</mat-error
+            >El monto debe ser ≥ al mínimo</mat-error
           >
           <mat-error *ngIf="subForm.get('amount')?.hasError('required')"
-            >Amount required</mat-error
+            >El monto es requerido</mat-error
           >
         </mat-form-field>
         <div>
@@ -107,7 +107,7 @@
             type="button"
             (click)="selectedFund = null"
           >
-            Cancel
+            Cancelar
           </button>
           <button
             mat-raised-button
@@ -115,7 +115,7 @@
             type="submit"
             [disabled]="subForm.invalid"
           >
-            Confirm
+            Confirmar
           </button>
         </div>
       </form>

@@ -37,7 +37,7 @@ export class ClientComponent implements OnInit {
   cancel(fundId: string) {
     if (!this.client) return;
     this.txApi.cancel({ clientId: this.client.id, fundId }).subscribe((tx) => {
-      this.snack.open(tx.message || 'Cancelled', 'Close', { duration: 3000 });
+      this.snack.open(tx.message || 'Cancelado', 'Cerrar', { duration: 3000, panelClass: ['success-toast'] });
       this.reload();
     });
   }

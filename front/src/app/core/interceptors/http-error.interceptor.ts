@@ -22,8 +22,8 @@ export class HttpErrorInterceptor implements HttpInterceptor {
           err.error?.message ||
           err.error?.detail ||
           err.message ||
-          'Unexpected error';
-        this.snack.open(msg, 'Close', { duration: 4000 });
+          'Error inesperado';
+        this.snack.open(msg, 'Cerrar', { duration: 4000, panelClass: ['error-toast'] });
         return throwError(() => err);
       })
     );

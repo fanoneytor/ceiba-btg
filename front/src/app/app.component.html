@@ -1,10 +1,10 @@
 <mat-toolbar color="primary">
-  <span>BTG Funds</span>
+  <span>Fondos BTG</span>
   <span class="spacer"></span>
 
   <mat-form-field appearance="outline" class="client-select">
     <mat-select
-      placeholder="Selecciona cliente"
+      placeholder="Seleccionar cliente"
       [value]="selectedClientId || ''"
       (selectionChange)="onSelectClient($event.value)">
       <mat-option value="">(Ninguno)</mat-option>
@@ -14,9 +14,9 @@
     </mat-select>
   </mat-form-field>
 
-  <a mat-button routerLink="/funds" routerLinkActive="active">Funds</a>
-  <a mat-button routerLink="/client" routerLinkActive="active">Client</a>
-  <a mat-button routerLink="/history" routerLinkActive="active">History</a>
+  <a mat-button routerLink="/funds" routerLinkActive="active">Fondos</a>
+  <a mat-button routerLink="/client" routerLinkActive="active">Cliente</a>
+  <a mat-button routerLink="/history" routerLinkActive="active">Historial</a>
 </mat-toolbar>
 
 <div class="container"><router-outlet></router-outlet></div>

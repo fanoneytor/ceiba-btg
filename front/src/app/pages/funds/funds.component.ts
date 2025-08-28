@@ -90,7 +90,7 @@ export class FundsComponent implements OnInit {
     this.clientsApi.create(this.clientForm.value as any).subscribe((c) => {
       this.client = c;
       this.clientsApi.setSelectedClientId(c.id);
-      this.snack.open('Client created', 'Close', { duration: 3000 });
+      this.snack.open('Cliente creado', 'Cerrar', { duration: 3000, panelClass: ['success-toast'] });
     });
   }
 
@@ -116,6 +116,7 @@ export class FundsComponent implements OnInit {
       .subscribe((tx) => {
         this.snack.open(tx.message || 'Subscription created', 'Close', {
           duration: 3000,
+          panelClass: ['success-toast']
         });
         // refresh client to update balance/active funds
         this.clientsApi
