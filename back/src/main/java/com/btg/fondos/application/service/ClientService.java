@@ -4,6 +4,7 @@ import com.btg.fondos.domain.model.Client;
 import com.btg.fondos.infrastructure.repository.ClientRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -22,4 +23,9 @@ public class ClientService {
     public Client save(Client client) {
         return clientRepository.save(client);
     }
+
+    public List<Client> getAll() {
+        return clientRepository.findAll();
+    }
+
 }
