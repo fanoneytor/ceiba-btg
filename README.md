@@ -150,6 +150,7 @@ A nivel de infraesctructura soy apasionado por los servicios que brinda AWS, por
 
 b) El diseño del modelo de datos lo implemente de la siguiente manera:
 Coleccion clientes
+```json
 {
   "_id": "68af8f21e4c54aedae6f55bc",
   "name": "Stefano Arias",
@@ -167,17 +168,18 @@ Coleccion clientes
   "createdAt": "2025-08-27T23:05:05.438Z",
   "updatedAt": "2025-08-27T23:49:13.345Z"
 }
-
+```
 Coleccion funds
+```json
 {
   "_id": "68af7f627bcf1fd7172eef17",
   "name": "FPV_BTG_PACTUAL_RECAUDADORA",
   "category": "FIXED_INCOME",           // ejemplo de taxonomía
   "minimumAmount": 125000
 }
-
-
+```
 Coleccion transations
+```json
 {
   "_id": "txn_01JABCDXYZ",
   "clientId": "68af8f21e4c54aedae6f55bc",
@@ -188,12 +190,12 @@ Coleccion transations
   "message": "Subscription successful",
   "date": "2025-08-27T23:49:13.340Z"
 }
-
-Nota: activeFunds vive embebido en clients para lecturas rápidas del estado actual del cliente; transactions mantiene auditoría inmutable.
+```
+- Nota: activeFunds vive embebido en clients para lecturas rápidas del estado actual del cliente; transactions mantiene auditoría inmutable.
 
 
 ## Parte 2 Consulta SQL
-
+```sql
 SELECT DISTINCT c.nombre
 FROM Cliente c
 JOIN Inscripción i   ON i.idCliente = c.id
@@ -215,4 +217,5 @@ AND EXISTS (
    AND v.idCliente  = c.id
   WHERE d.idProducto = p.id
 );
+```
 
