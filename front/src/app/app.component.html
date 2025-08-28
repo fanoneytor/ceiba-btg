@@ -1,8 +1,25 @@
 <mat-toolbar color="primary">
   <span>BTG Funds</span>
   <span class="spacer"></span>
-  <a mat-button routerLink="/funds">Funds</a>
-  <a mat-button routerLink="/client">Client</a>
-  <a mat-button routerLink="/history">History</a>
+
+  <mat-form-field appearance="outline" class="client-select">
+    <mat-select
+      placeholder="Selecciona cliente"
+      [value]="selectedClientId || ''"
+      (selectionChange)="onSelectClient($event.value)">
+      <mat-option value="">(Ninguno)</mat-option>
+      <mat-option *ngFor="let c of clients$ | async; trackBy: trackById" [value]="c.id">
+        {{ c.name }} — {{ c.availableBalance | currency:'COP' }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <a mat-button routerLink="/funds" routerLinkActive="active">Funds</a>
+  <a mat-button routerLink="/client" routerLinkActive="active">Client</a>
+  <a mat-button routerLink="/history" routerLinkActive="active">History</a>
 </mat-toolbar>
+
 <div class="container"><router-outlet></router-outlet></div>
+
+<!-- DEBUG opcional: muestra lo que llega -->
+<!-- <pre>{{ (clients$ | async) | json }}</pre> -->

@@ -18,12 +18,18 @@ export class ClientService {
     return this.http.get<Client>(`${this.base}/${id}`);
   }
 
+  list(): Observable<Client[]> {
+    return this.http.get<Client[]>(this.base);
+  }
+
   setSelectedClientId(id: string) {
     localStorage.setItem(STORAGE_KEYS.CLIENT_ID, id);
   }
+
   getSelectedClientId(): string | null {
     return localStorage.getItem(STORAGE_KEYS.CLIENT_ID);
   }
+
   clearSelectedClient() {
     localStorage.removeItem(STORAGE_KEYS.CLIENT_ID);
   }
