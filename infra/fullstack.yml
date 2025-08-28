@@ -1,19 +1,11 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: Fullstack CFN - Angular in S3+CloudFront, Spring Boot in EC2, Mongo Atlas external
+Description: Fullstack CFN - Angular in S3+CloudFront, Spring Boot en EC2, Mongo Atlas externo
 
 Parameters:
   ProjectName:
     Type: String
     Default: demo-fullstack
     Description: Nombre lógico para recursos
-
-  AngularBucketName:
-    Type: String
-    Description: Nombre del bucket S3 para el sitio Angular (debe ser globalmente único)
-
-  BackendJarS3Bucket:
-    Type: String
-    Description: Bucket S3 donde resides el JAR del backend
 
   BackendJarS3Key:
     Type: String
@@ -44,10 +36,18 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
     Description: Par de claves para acceso SSH (opcional para debugging)
 
+  DefaultVpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC (usa la default)
+
+  DefaultSubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: Subnet de la VPC default
+
 Mappings:
   RegionMap:
     us-east-1:
-      AMI: ami-0fff1b9a61dec8a5f # Amazon Linux 2023 (actualízala si tu región es otra)
+      AMI: ami-0fff1b9a61dec8a5f # Amazon Linux 2023
     us-east-2:
       AMI: ami-00cf59bc9978eb266
     us-west-2:
@@ -55,12 +55,12 @@ Mappings:
 
 Resources:
   # ------------------------------------------------------------
-  # S3 Bucket para Angular + Política + Bloqueo Público Off
+  # Buckets S3
   # ------------------------------------------------------------
   AngularBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Ref AngularBucketName
+      BucketName: !Sub "${ProjectName}-frontend-${AWS::StackName}"
       OwnershipControls:
         Rules:
           - ObjectOwnership: BucketOwnerPreferred
@@ -71,15 +71,29 @@ Resources:
         RestrictPublicBuckets: true
       WebsiteConfiguration:
         IndexDocument: index.html
-        ErrorDocument: index.html # SPA routing
+        ErrorDocument: index.html
 
+  BackendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${ProjectName}-backend-${AWS::StackName}"
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+
+  # OAI para CloudFront
   CloudFrontOAI:
     Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
     Properties:
       CloudFrontOriginAccessIdentityConfig:
         Comment: !Sub "${ProjectName}-oai"
 
-  # Política para permitir que CloudFront lea del bucket mediante OAC
+  # Política para que CloudFront pueda leer AngularBucket
   AngularBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
@@ -91,10 +105,7 @@ Resources:
             Principal:
               AWS: !Sub "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${CloudFrontOAI}"
             Action: "s3:GetObject"
-            Resource: !Sub "${AngularBucket.Arn}/angular/*"
-            Condition:
-              StringEquals:
-                AWS:SourceArn: !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}"
+            Resource: !Sub "arn:aws:s3:::${AngularBucket}/*"
 
   # Distribución CloudFront
   CloudFrontDistribution:
@@ -123,7 +134,7 @@ Resources:
             ResponsePagePath: /index.html
 
   # ------------------------------------------------------------
-  # IAM Role & Instance Profile para EC2 (acceso S3)
+  # IAM Role & Instance Profile para EC2 (acceso a BackendBucket)
   # ------------------------------------------------------------
   EC2Role:
     Type: AWS::IAM::Role
@@ -143,10 +154,10 @@ Resources:
               - Effect: Allow
                 Action:
                   - s3:GetObject
-                Resource: !Sub "arn:aws:s3:::${BackendJarS3Bucket}/${BackendJarS3Key}"
+                Resource: !Sub "arn:aws:s3:::${BackendBucket}/${BackendJarS3Key}"
               - Effect: Allow
                 Action: [s3:ListBucket]
-                Resource: !Sub "arn:aws:s3:::${BackendJarS3Bucket}"
+                Resource: !Sub "arn:aws:s3:::${BackendBucket}"
 
   EC2InstanceProfile:
     Type: AWS::IAM::InstanceProfile
@@ -154,13 +165,13 @@ Resources:
       Roles: [!Ref EC2Role]
 
   # ------------------------------------------------------------
-  # Security Group para backend
+  # Security Group backend
   # ------------------------------------------------------------
   BackendSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Access for backend over HTTP (80)
-      VpcId: !Ref AWS::NoValue # default VPC implícita
+      VpcId: !Ref DefaultVpcId
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 80
@@ -171,7 +182,7 @@ Resources:
           CidrIp: 0.0.0.0/0
 
   # ------------------------------------------------------------
-  # EC2 con UserData -> Java + Nginx + systemd para el JAR
+  # EC2 backend con Nginx proxy + systemd service
   # ------------------------------------------------------------
   BackendEC2:
     Type: AWS::EC2::Instance
@@ -203,18 +214,16 @@ Resources:
                 Version: ${ArtifactVersion}
           commands:
             01_mkdir:
-              command: |
-                mkdir -p /opt/app
+              command: mkdir -p /opt/app
             02_fetch_jar:
               command: !Sub |
-                aws s3 cp s3://${BackendJarS3Bucket}/${BackendJarS3Key} /opt/app/app.jar
+                aws s3 cp s3://${BackendBucket}/${BackendJarS3Key} /opt/app/app.jar
             03_permissions:
               command: |
                 chown ec2-user:ec2-user /opt/app/app.jar
                 chmod 755 /opt/app/app.jar
             04_systemd_reload:
-              command: |
-                systemctl daemon-reload
+              command: systemctl daemon-reload
             05_enable_start:
               command: |
                 systemctl enable springboot
@@ -225,6 +234,7 @@ Resources:
       IamInstanceProfile: !Ref EC2InstanceProfile
       KeyName: !Ref KeyName
       SecurityGroupIds: [!Ref BackendSG]
+      SubnetId: !Ref DefaultSubnetId
       UserData:
         Fn::Base64: !Sub |
           #!/usr/bin/bash
@@ -232,7 +242,7 @@ Resources:
           dnf update -y
           dnf install -y java-17-amazon-corretto nginx awscli
 
-          # Nginx como proxy a Spring Boot
+          # Nginx como proxy
           cat >/etc/nginx/conf.d/backend.conf <<NGINX
           server {
             listen 80 default_server;
@@ -254,13 +264,11 @@ Resources:
           systemctl enable nginx
           systemctl restart nginx
 
-          # Ejecuta cfn-init para aplicar CFN::Init (descarga del JAR & service)
           /opt/aws/bin/cfn-init -v \
             --stack ${AWS::StackName} \
             --resource BackendEC2 \
             --region ${AWS::Region}
 
-          # Marca éxito
           /opt/aws/bin/cfn-signal -e $? \
             --stack ${AWS::StackName} \
             --resource BackendEC2 \
@@ -272,8 +280,12 @@ Outputs:
     Value: !Sub "https://${CloudFrontDistribution.DomainName}"
 
   AngularBucketOut:
-    Description: Bucket S3 para subir el build de Angular
+    Description: Bucket S3 creado para frontend
     Value: !Ref AngularBucket
+
+  BackendBucketOut:
+    Description: Bucket S3 creado para backend
+    Value: !Ref BackendBucket
 
   BackendPublicDNS:
     Description: DNS público de la instancia backend (Nginx escucha en 80)
