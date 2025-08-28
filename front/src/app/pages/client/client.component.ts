@@ -7,11 +7,13 @@ import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { ConfirmationDialogComponent } from '../../shared/components/confirmation-dialog/confirmation-dialog.component';
 
 @Component({
   standalone: true,
   selector: 'app-client',
-  imports: [CommonModule, MatCardModule, MatTableModule, MatButtonModule],
+  imports: [CommonModule, MatCardModule, MatTableModule, MatButtonModule, MatDialogModule],
   templateUrl: './client.component.html',
   styleUrls: ['./client.component.scss'],
 })
@@ -21,7 +23,8 @@ export class ClientComponent implements OnInit {
   constructor(
     private clientsApi: ClientService,
     private txApi: TransactionService,
-    private snack: MatSnackBar
+    private snack: MatSnackBar,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit() {
@@ -36,9 +39,18 @@ export class ClientComponent implements OnInit {
 
   cancel(fundId: string) {
     if (!this.client) return;
-    this.txApi.cancel({ clientId: this.client.id, fundId }).subscribe((tx) => {
-      this.snack.open(tx.message || 'Cancelado', 'Cerrar', { duration: 3000, panelClass: ['success-toast'] });
-      this.reload();
+
+    const dialogRef = this.dialog.open(ConfirmationDialogComponent, {
+      data: { message: '¿Está seguro que desea cancelar la suscripción a este fondo?' },
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.txApi.cancel({ clientId: this.client!.id, fundId }).subscribe((tx) => {
+          this.snack.open(tx.message || 'Cancelado', 'Cerrar', { duration: 3000, panelClass: ['success-toast'] });
+          this.reload();
+        });
+      }
     });
   }
 }
