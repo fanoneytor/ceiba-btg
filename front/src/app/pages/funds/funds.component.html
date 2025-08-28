@@ -1,0 +1,124 @@
+<ng-container *ngIf="loading; else content">
+  <div class="center">
+    <mat-progress-spinner mode="indeterminate"></mat-progress-spinner>
+  </div>
+</ng-container>
+
+<ng-template #content>
+  <section *ngIf="!client" class="create-client">
+    <mat-card>
+      <mat-card-title>Create Client</mat-card-title>
+      <mat-card-content>
+        <form [formGroup]="clientForm" (ngSubmit)="createClient()">
+          <div class="row">
+            <mat-form-field appearance="outline"
+              ><mat-label>Name</mat-label
+              ><input matInput formControlName="name"
+            /></mat-form-field>
+            <mat-form-field appearance="outline"
+              ><mat-label>Email</mat-label
+              ><input matInput formControlName="email"
+            /></mat-form-field>
+            <mat-form-field appearance="outline"
+              ><mat-label>Phone</mat-label
+              ><input matInput formControlName="phone"
+            /></mat-form-field>
+          </div>
+          <div class="row">
+            <mat-form-field appearance="outline"
+              ><mat-label>Initial Balance (COP)</mat-label
+              ><input type="number" matInput formControlName="initialBalance"
+            /></mat-form-field>
+            <mat-form-field appearance="outline"
+              ><mat-label>Notification</mat-label>
+              <mat-select formControlName="preferredNotification">
+                <mat-option value="EMAIL">EMAIL</mat-option>
+                <mat-option value="SMS">SMS</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <button
+            mat-raised-button
+            color="primary"
+            type="submit"
+            [disabled]="clientForm.invalid"
+          >
+            Create
+          </button>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  </section>
+
+  <section class="funds-grid">
+    <mat-card *ngFor="let f of funds">
+      <mat-card-title>{{ f.name }}</mat-card-title>
+      <mat-card-subtitle
+        >Minimum: {{ f.minimumAmount | currency : "COP" }}</mat-card-subtitle
+      >
+      <mat-card-content>Category: {{ f.category }}</mat-card-content>
+      <mat-card-actions>
+        <button
+          mat-flat-button
+          color="primary"
+          (click)="openSubscribe(f)"
+          [disabled]="!client"
+        >
+          Subscribe
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </section>
+
+  <section *ngIf="client" class="client-info">
+    <mat-card>
+      <mat-card-title>Client</mat-card-title>
+      <mat-card-content>
+        <p>
+          <b>{{ client.name }}</b> — Balance:
+          {{ client.availableBalance | currency : "COP" }}
+        </p>
+        <p>Notification: {{ client.preferredNotification }}</p>
+      </mat-card-content>
+    </mat-card>
+  </section>
+
+  <!-- Dialog simple inline -->
+  <mat-card *ngIf="selectedFund" class="subscribe">
+    <mat-card-title>Subscribe: {{ selectedFund.name }}</mat-card-title>
+    <mat-card-content>
+      <form [formGroup]="subForm" (ngSubmit)="confirmSubscribe()">
+        <mat-form-field appearance="outline" class="w-300">
+          <mat-label
+            >Amount (>=
+            {{ selectedFund.minimumAmount | currency : "COP" }})</mat-label
+          >
+          <input type="number" matInput formControlName="amount" />
+          <mat-error *ngIf="subForm.get('amount')?.hasError('min')"
+            >Amount must be ≥ minimum</mat-error
+          >
+          <mat-error *ngIf="subForm.get('amount')?.hasError('required')"
+            >Amount required</mat-error
+          >
+        </mat-form-field>
+        <div>
+          <button
+            mat-stroked-button
+            type="button"
+            (click)="selectedFund = null"
+          >
+            Cancel
+          </button>
+          <button
+            mat-raised-button
+            color="primary"
+            type="submit"
+            [disabled]="subForm.invalid"
+          >
+            Confirm
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</ng-template>

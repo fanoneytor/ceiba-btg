@@ -1,0 +1,30 @@
+.funds-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  margin-top: 16px;
+}
+.center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40vh;
+}
+.row {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.w-300 {
+  width: 300px;
+  max-width: 100%;
+}
+.subscribe {
+  margin-top: 16px;
+}
+.create-client {
+  margin-bottom: 16px;
+}
+.client-info {
+  margin-top: 16px;
+}
