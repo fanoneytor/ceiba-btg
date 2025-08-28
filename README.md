@@ -133,3 +133,86 @@ curl -i https://<CloudFrontURL>/api/clients
 - En local funciona sin CORS, en AWS está habilitado en `@CrossOrigin`.
 
 ---
+
+
+## RESPUESTAS TEXTUALES:
+a) Las Tecnologías que use son las que preferiría ya que Spring Boot es Rápido para exponer API REST y manejar reglas de negocio,
+se puede realizar una integración nativa con MongoDB, validaciónes, transacciones, perfiles entre otras ventajas.
+
+Facilita clean code por su arquitectura con paquetes, pruebas con JUnit5/Mockito.
+
+Base de datos MongoDB por ser noSQL puede ser muy optima cuando se manejan grandes cantidades de datos dada su estructura,
+flexibilidad para evolucionar esquema y buen fit para historial de transacciones, indices compuestos simples para queries típicas.
+
+para el frontend con Angular puedo realizar una estructura clara para “clean code” en UI.
+
+A nivel de infraesctructura soy apasionado por los servicios que brinda AWS, por tal motivo lo volveria a elegir.
+
+b) El diseño del modelo de datos lo implemente de la siguiente manera:
+Coleccion clientes
+{
+  "_id": "68af8f21e4c54aedae6f55bc",
+  "name": "Stefano Arias",
+  "email": "stefano.arias@yopmail.com",
+  "phone": "+573232230537",
+  "availableBalance": 375000,
+  "preferredNotification": "EMAIL",      // EMAIL | SMS
+  "activeFunds": [
+    {
+      "fundId": "68af7f627bcf1fd7172eef17",
+      "investedAmount": 125000,
+      "subscriptionDate": "2025-08-27T23:49:13.328Z"
+    }
+  ],
+  "createdAt": "2025-08-27T23:05:05.438Z",
+  "updatedAt": "2025-08-27T23:49:13.345Z"
+}
+
+Coleccion funds
+{
+  "_id": "68af7f627bcf1fd7172eef17",
+  "name": "FPV_BTG_PACTUAL_RECAUDADORA",
+  "category": "FIXED_INCOME",           // ejemplo de taxonomía
+  "minimumAmount": 125000
+}
+
+
+Coleccion transations
+{
+  "_id": "txn_01JABCDXYZ",
+  "clientId": "68af8f21e4c54aedae6f55bc",
+  "fundId": "68af7f627bcf1fd7172eef17",
+  "type": "SUBSCRIPTION",               // SUBSCRIPTION | CANCELLATION
+  "amount": 125000,
+  "status": "SUCCESS",                  // SUCCESS | FAILED
+  "message": "Subscription successful",
+  "date": "2025-08-27T23:49:13.340Z"
+}
+
+Nota: activeFunds vive embebido en clients para lecturas rápidas del estado actual del cliente; transactions mantiene auditoría inmutable.
+
+
+## Parte 2 Consulta SQL
+
+SELECT DISTINCT c.nombre
+FROM Cliente c
+JOIN Inscripción i   ON i.idCliente = c.id
+JOIN Producto    p   ON p.id = i.idProducto
+WHERE NOT EXISTS (
+  SELECT 1
+  FROM Disponibilidad d
+  LEFT JOIN Visitan v
+    ON v.idSucursal = d.idSucursal
+   AND v.idCliente  = c.id
+  WHERE d.idProducto = p.id
+    AND v.idCliente IS NULL
+)
+AND EXISTS ( 
+  SELECT 1
+  FROM Disponibilidad d
+  JOIN Visitan v
+    ON v.idSucursal = d.idSucursal
+   AND v.idCliente  = c.id
+  WHERE d.idProducto = p.id
+);
+
