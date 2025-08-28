@@ -44,7 +44,7 @@ public class TransactionService {
 
         if (clientOpt.isEmpty() || fundOpt.isEmpty()) {
             return saveTransaction(clientId, fundId, amount, TransactionType.SUBSCRIPTION,
-                    TransactionStatus.FAILED, "Client or Fund not found");
+                    TransactionStatus.FAILED, "Cliente o Fondo no encontrado");
         }
 
         Client client = clientOpt.get();
@@ -54,17 +54,17 @@ public class TransactionService {
                 .anyMatch(s -> s.getFundId().equals(fundId));
         if (alreadySubscribed) {
             return saveTransaction(clientId, fundId, amount, TransactionType.SUBSCRIPTION,
-                    TransactionStatus.FAILED, "Already subscribed to this fund");
+                    TransactionStatus.FAILED, "Ya estas suscrito a este fondo");
         }
 
         if (amount.compareTo(fund.getMinimumAmount()) < 0) {
             return saveTransaction(clientId, fundId, amount, TransactionType.SUBSCRIPTION,
-                    TransactionStatus.FAILED, "Amount below fund minimum");
+                    TransactionStatus.FAILED, "Monto por debajo del minimo");
         }
 
         if (client.getAvailableBalance().compareTo(amount) < 0) {
             return saveTransaction(clientId, fundId, amount, TransactionType.SUBSCRIPTION,
-                    TransactionStatus.FAILED, "Insufficient balance");
+                    TransactionStatus.FAILED, "Saldo insuficiente");
         }
 
         client.setAvailableBalance(client.getAvailableBalance().subtract(amount));
@@ -72,7 +72,7 @@ public class TransactionService {
         clientRepository.save(client);
 
         Transaction tx = saveTransaction(clientId, fundId, amount, TransactionType.SUBSCRIPTION,
-                TransactionStatus.SUCCESS, "Subscription successful");
+                TransactionStatus.SUCCESS, "Suscripción exitosa");
 
         publisher.publishEvent(new SubscriptionCreatedEvent(this, clientId, fundId, tx.getTransactionId())); // <-- nuevo
         return tx;
@@ -84,7 +84,7 @@ public class TransactionService {
 
         if (clientOpt.isEmpty()) {
             return saveTransaction(clientId, fundId, BigDecimal.ZERO, TransactionType.CANCELLATION,
-                    TransactionStatus.FAILED, "Client not found");
+                    TransactionStatus.FAILED, "Cliente no encontrado");
         }
 
         Client client = clientOpt.get();
@@ -96,7 +96,7 @@ public class TransactionService {
 
         if (subscription == null) {
             return saveTransaction(clientId, fundId, BigDecimal.ZERO, TransactionType.CANCELLATION,
-                    TransactionStatus.FAILED, "No active subscription found");
+                    TransactionStatus.FAILED, "No se encontró ninguna suscripción activa");
         }
 
         client.setAvailableBalance(client.getAvailableBalance().add(subscription.getInvestedAmount()));
@@ -104,7 +104,7 @@ public class TransactionService {
         clientRepository.save(client);
 
         return saveTransaction(clientId, fundId, subscription.getInvestedAmount(),
-                TransactionType.CANCELLATION, TransactionStatus.SUCCESS, "Cancellation successful");
+                TransactionType.CANCELLATION, TransactionStatus.SUCCESS, "Cancelación exitosa");
     }
 
     public List<Transaction> getHistory(String clientId) {

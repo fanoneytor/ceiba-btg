@@ -30,8 +30,8 @@ public class SubscriptionNotificationListener {
         Fund f = fundRepo.findById(event.getFundId()).orElse(null);
         if (c == null || f == null) return;
 
-        String subject = "Subscription successful";
-        String content = "You subscribed to fund " + f.getName() + " (Tx: " + event.getTransactionId() + ").";
+        String subject = "Suscripción exitosa";
+        String content = "Te suscribiste al fondo " + f.getName() + " (Tx: " + event.getTransactionId() + ").";
 
         NotificationChannel ch = c.getPreferredNotification();
         if (ch == NotificationChannel.EMAIL && c.getEmail() != null)

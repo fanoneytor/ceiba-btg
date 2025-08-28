@@ -1,8 +1,11 @@
 package com.btg.fondos.config;
 
 import com.btg.fondos.domain.enums.FundCategory;
+import com.btg.fondos.domain.enums.NotificationChannel;
 import com.btg.fondos.domain.model.Fund;
+import com.btg.fondos.domain.model.Client;
 import com.btg.fondos.infrastructure.repository.FundRepository;
+import com.btg.fondos.infrastructure.repository.ClientRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,7 +28,24 @@ public class DataInitializer {
                         new Fund(null, "FPV_BTG_PACTUAL_DINAMICA", new BigDecimal("100000"), FundCategory.FPV, null, null)
                 );
                 fundRepository.saveAll(funds);
-                System.out.println("✅ Initial funds loaded into MongoDB.");
+                System.out.println("✅ Fondos iniciales cargados en MongoDB.");
+            }
+        };
+    }
+
+    @Bean
+    CommandLineRunner loadInitialClient(ClientRepository clientRepository) {
+        return args -> {
+            if (clientRepository.count() == 0) {
+                Client initialClient = Client.builder()
+                        .name("Stefano Arias")
+                        .email("stefano.arias@example.com")
+                        .phone("3232230537")
+                        .availableBalance(new BigDecimal("500000"))
+                        .preferredNotification(NotificationChannel.EMAIL)
+                        .build();
+                clientRepository.save(initialClient);
+                System.out.println("✅ Cliente inicial cargado en MongoDB.");
             }
         };
     }

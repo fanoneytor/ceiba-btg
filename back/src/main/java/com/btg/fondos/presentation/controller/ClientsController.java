@@ -1,6 +1,7 @@
 package com.btg.fondos.presentation.controller;
 
 import com.btg.fondos.domain.enums.NotificationChannel;
+import com.btg.fondos.domain.model.Client;
 import com.btg.fondos.domain.model.Fund;
 import com.btg.fondos.presentation.dto.ActiveSubscriptionResponse;
 import com.btg.fondos.presentation.dto.ClientCreateRequest;
@@ -32,7 +33,7 @@ public class ClientsController {
 
     @PostMapping
     public ResponseEntity<ClientResponse> create(@Valid @RequestBody ClientCreateRequest req) {
-        var c = new com.btg.fondos.domain.model.Client();
+        var c = new Client();
         c.setName(req.name());
         c.setEmail(req.email());
         c.setPhone(req.phone());
