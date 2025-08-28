@@ -5,7 +5,7 @@ spring:
   data:
     mongodb:
       uri: ${MONGO_URI}
-      database: ${MONGO_DB}
+      database: btgdb
 
 server:
   port: 8080
